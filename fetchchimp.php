@@ -26,7 +26,10 @@
  	 */
 
 	class Fetchchimp {
-		
+		static private $_field_names = array();
+
+		static private $_merge_vars = array();
+
 		/**
      	 * 	Checks if current URL is the trigger URL and triggers import if so
      	 *
@@ -61,7 +64,7 @@
 
 		static public function getMailchimpListIds() {
 			//return '31f2a7da27';
-		
+
 			$ids = explode(',', get_option(WP88_MC_LISTS)); 
 			
 			foreach ($ids as $index => $id) {
@@ -75,33 +78,78 @@
 			return $ids;
 		}
 
-		static public function getMailchimpApiUrl($list_id) {
+		static public function getMailchimpApiUrlList($list_id) {
 			return 'http://' . self::getMailchimpDataCentre() . '.api.mailchimp.com/export/1.0/list?apikey=' . self::getMailchimpApiKey() . '&id=' . $list_id;
+		}
+
+		static public function getMailchimpApiUrlFields($list_id) {
+			return 'http://' . self::getMailchimpDataCentre() . '.api.mailchimp.com/1.3/?method=listMergeVars&apikey=' . self::getMailchimpApiKey() . '&id=' . $list_id;
 		}
 
 		static public function getChunkSize() {
 			return 4096;
 		}
 
-		static public function fetch_list($list_id) {
-			$handle = @fopen(self::getMailchimpApiUrl($list_id), 'r');
+		static public function setFieldNames($field_names, $list_id) {
+			//go and get the merge vars
+			$handle = @fopen(self::getMailchimpApiUrlFields($list_id), 'r');
 			
 			if ($handle) {
   				$i = 0;
-  				$header = array();
+  
+  				while (!feof($handle)) {
+  					$buffer = fgets($handle, self::getChunkSize());
+
+  					if (trim($buffer) != '') {
+  						$obj = json_decode($buffer, true);
+
+  						foreach ($obj as $field) {
+      						self::$_merge_vars[$field['name']] = $field['tag'];
+      					}
+      			
+      					$i++;
+  					}
+  				}
+  			}
+
+  			echo '<h3>The fields:</h3>';
+			echo '<pre>';
+			print_r($field_names);
+			echo '</pre>';
+			echo '<hr />';
+
+  			//assign the field names
+			self::$_field_names = $field_names;
+
+			return self;
+		}
+
+		static protected function _process_record($data) {
+			//locate the user
+			echo '<h3>A mailchimp user:</h3>';
+			echo '<pre>';
+			print_r($data);
+			echo '</pre>';
+			echo '<hr />';
+		}
+
+		static public function fetch_list($list_id) {
+			$handle = @fopen(self::getMailchimpApiUrlList($list_id), 'r');
+			
+			if ($handle) {
+  				$i = 0;
   
   				while (!feof($handle)) {
     				$buffer = fgets($handle, self::getChunkSize());
 
-    				if (trim($buffer)!='') {
+    				if (trim($buffer) != '') {
       					$obj = json_decode($buffer);
 
-      					if ($i==0) {
+      					if ($i == 0) {
         					//store the header row
-        					$header = $obj;
+        					self::setFieldNames($obj, $list_id);
       					} else {
-        					//echo, write to a file, queue a job, etc.
-        					echo $header[0].': '.$obj[0]."\n";
+        					self::_process_record($obj);
       					}
       			
       					$i++;
@@ -115,7 +163,7 @@
 		}
 
 		static public function fetch() {
-			foreach(self::getMailchimpListIds() as $list_id) {
+			foreach (self::getMailchimpListIds() as $list_id) {
 				self::fetch_list($list_id);
 			}
 		}
