@@ -36,7 +36,7 @@
 
 		static function log($msg, $type = Logfile::LOG_TYPE_INFORMATION) {
 			if (self::$_logfile == null) {
-				self::$_logfile = new Logfile('activity.log', 'fetchchimp/log');
+				self::$_logfile = new Logfile('activity.log', WP_PLUGIN_DIR . '/fetchchimp/log');
 			}
 
 			self::$_logfile->log($msg);
@@ -123,21 +123,80 @@
   				}
   			}
 
-  			echo '<h3>The fields:</h3>';
+  			//assign the field names
+			self::$_field_names = $field_names;
+
+			echo '<h3>The fields:</h3>';
 			echo '<pre>';
-			print_r($field_names);
+			print_r(self::$_field_names);
 			echo '</pre>';
 			echo '<hr />';
 
-  			//assign the field names
-			self::$_field_names = $field_names;
+			echo '<h3>The merge vars:</h3>';
+			echo '<pre>';
+			print_r(self::$_merge_vars);
+			echo '</pre>';
+			echo '<hr />';
+		}
+
+		static protected function _getFieldLabelFromIndex($index) {
+			return (isset(self::$_field_names[$index])) ? self::$_field_names[$index] : false;
+		}
+
+		static protected function _getFieldNameFromLabel($label) {
+			return (isset(self::$_merge_vars[$label])) ? self::$_merge_vars[$label] : false;
+		}
+
+		static protected function _getFieldNameFromIndex($index) {
+			if ($label = self::_getFieldLabelFromIndex($index)) {
+				if ($field_name = self::_getFieldNameFromLabel($label)) {
+					return $field_name;
+				}
+			}
+			
+			return false;
 		}
 
 		static protected function _process_record($data) {
+			$email_address = false;
+			$user = false;
+
 			//locate the user
 			echo '<h3>A mailchimp user:</h3>';
 			echo '<pre>';
 			print_r($data);
+			echo '</pre>';
+
+			foreach ($data as $key => $value) {
+				if ($key === 0) {
+					//1. find the user based on email address (index:0 in the $data array)
+
+					$email_address = $data[0];
+
+					//try and get the wordpress user
+					if (!$user = get_user_by('email', $email_address)) {
+						//couldn't find the user, log to file and break out
+						self::log("User ' . $email_address . ' not found", Logfile::LOG_TYPE_WARNING);
+
+						break;
+					} else {
+						//found the user so continue to the next 
+						continue;
+					}
+				} else if ($key === 1 || $key === 2) {
+					//2. Now we're on wordpress fields (just supporting first and last name at the moment)
+
+				} else {
+					//3. Now we're on fields other than the email address and other wordpress fields
+					if ($field_name = self::_getFieldNameFromIndex($key)) {
+
+					}
+				}
+			}
+
+			echo '<h3>A wordpress user:</h3>';
+			echo '<pre>';
+			print_r($user);
 			echo '</pre>';
 			echo '<hr />';
 		}
