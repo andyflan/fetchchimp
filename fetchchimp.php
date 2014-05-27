@@ -14,6 +14,8 @@
 		Author URI: 
 	*/
 
+	include_once "Logfile.php";
+
 	/**
 	 *	Tells wordpress to ask fetchchimp::trigger_export to parse the request which handles it if required
 	 */
@@ -30,6 +32,16 @@
 
 		static private $_merge_vars = array();
 
+		static private $_logfile;
+
+		static function log($msg, $type = Logfile::LOG_TYPE_INFORMATION) {
+			if (self::$_logfile == null) {
+				self::$_logfile = new Logfile('activity.log', 'fetchchimp/log');
+			}
+
+			self::$_logfile->log($msg);
+		}
+
 		/**
      	 * 	Checks if current URL is the trigger URL and triggers import if so
      	 *
@@ -43,11 +55,10 @@
 			//if (isset($_GET['myplugin']) && $_SERVER["REQUEST_URI"] == '/custom_url') {
 			if ($_SERVER["REQUEST_URI"] == '/fetchchimp/trigger') {
 				self::fetch();
+				self::log('Mailchimp import complete');
 
 				exit();
 			}
-
-			return self;
 		}
 
 		static public function getMailchimpApiKey() {
@@ -120,8 +131,6 @@
 
   			//assign the field names
 			self::$_field_names = $field_names;
-
-			return self;
 		}
 
 		static protected function _process_record($data) {
@@ -158,8 +167,6 @@
   		
   				fclose($handle);
 			}
-
-			return self;
 		}
 
 		static public function fetch() {
