@@ -55,9 +55,10 @@
      	 */
 
 		static public function try_trigger_import() {
-			//if (isset($_GET['myplugin']) && $_SERVER["REQUEST_URI"] == '/custom_url') {
+			//if our path is being used then do some work and exit
 			if ($_SERVER["REQUEST_URI"] == '/fetchchimp/trigger') {
 				self::fetch();
+				
 				self::log('Mailchimp import complete');
 
 				exit();
@@ -103,6 +104,15 @@
 		static public function getMailchimpApiUrlFields($list_id) {
 			return 'http://' . self::getMailchimpDataCentre() . '.api.mailchimp.com/1.3/?method=listMergeVars&apikey=' . self::getMailchimpApiKey() . '&id=' . $list_id;
 		}
+
+		/**
+		 * 	Returns a default chunksize for iterating over mailchimp payload. Included for future compatibility
+		 *
+		 *	@return 	int 	The size in bytes
+		 *	@access 	public
+     	 * 	@static 	
+     	 * 	@since 		0.0.1
+		 */
 
 		static public function getChunkSize() {
 			return 4096;
