@@ -1,6 +1,6 @@
 <?php
-	error_reporting(E_ERROR);
-	ini_set('display_errors', '1');
+error_reporting(E_ERROR);
+ini_set('display_errors', '1');
 
 	/*
 		@package fetchchimp
@@ -14,8 +14,8 @@
 		Author URI: 
 	*/
 
-	include_once "Logfile.php";
-	include_once "Model/Cimyfield.php";
+		include_once "Logfile.php";
+		include_once "Model/Cimyfield.php";
 
 	/**
 	 *	Tells wordpress to ask fetchchimp::trigger_export to parse the request which handles it if required
@@ -136,22 +136,22 @@
 			$handle = @fopen(self::getMailchimpApiUrlFields($list_id), 'r');
 			
 			if ($handle) {
-  				$i = 0;
-  
-  				while (!feof($handle)) {
-  					$buffer = fgets($handle, self::getChunkSize());
+				$i = 0;
+				
+				while (!feof($handle)) {
+					$buffer = fgets($handle, self::getChunkSize());
 
-  					if (trim($buffer) != '') {
-  						$obj = json_decode($buffer, true);
+					if (trim($buffer) != '') {
+						$obj = json_decode($buffer, true);
 
-  						foreach ($obj as $field) {
-      						self::$_merge_vars[$field['name']] = $field['tag'];
-      					}
-      			
-      					$i++;
-  					}
-  				}
-  			}
+						foreach ($obj as $field) {
+							self::$_merge_vars[$field['name']] = $field['tag'];
+						}
+						
+						$i++;
+					}
+				}
+			}
 
   			//assign the field names
 			self::$_field_labels = $field_labels;
@@ -225,12 +225,12 @@
 
 		static protected function _getOptionByValueSql($value) {
 			$sql = "
-				SELECT 
-					option_name
-				FROM
-					{$wpdb->options}
-				WHERE
-					option_value = '{$value}'
+			SELECT 
+			option_name
+			FROM
+			{$wpdb->options}
+			WHERE
+			option_value = '{$value}'
 			";
 
 			return $sql;
@@ -349,14 +349,14 @@
 					//2. Now we're on wordpress fields (just supporting first and last name at the moment)
 					switch ($key) {
 						case 1:
-							$user_data->first_name = $value;
+						$user_data->first_name = $value;
 
-							break;
+						break;
 
 						case 2:
-							$user_data->last_name = $value;
+						$user_data->last_name = $value;
 
-							break;
+						break;
 					}
 				} else {
 					//3. Now we're on fields other than the email address and other wordpress fields (Cimy Extra fields for instance)
@@ -398,26 +398,26 @@
 			$handle = @fopen(self::getMailchimpApiUrlList($list_id), 'r');
 			
 			if ($handle) {
-  				$i = 0;
-  
-  				while (!feof($handle)) {
-    				$buffer = fgets($handle, self::getChunkSize());
+				$i = 0;
+				
+				while (!feof($handle)) {
+					$buffer = fgets($handle, self::getChunkSize());
 
-    				if (trim($buffer) != '') {
-      					$obj = json_decode($buffer);
+					if (trim($buffer) != '') {
+						$obj = json_decode($buffer);
 
-      					if ($i == 0) {
+						if ($i == 0) {
         					//store the header row
-        					self::setFieldLabels($obj, $list_id);
-      					} else {
-        					self::_process_record($obj);
-      					}
-      			
-      					$i++;
-    				}
-  				}
-  		
-  				fclose($handle);
+							self::setFieldLabels($obj, $list_id);
+						} else {
+							self::_process_record($obj);
+						}
+						
+						$i++;
+					}
+				}
+				
+				fclose($handle);
 			}
 		}
 
